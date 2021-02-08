@@ -93,3 +93,14 @@ source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-youtube-dl/Config.in"
 comment "Test tools"
 source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/hifiberry-test/Config.in"
 
+comment "WiSA"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-wisa/Config.in"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-pg8000/Config.in"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-scramp/Config.in"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-blinker/Config.in"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/python-wheel/Config.in"
+
+comment "KAD"
+source "$BR2_EXTERNAL_HIFIBERRY_PATH/package/kad-scripts/Config.in"
+
+
