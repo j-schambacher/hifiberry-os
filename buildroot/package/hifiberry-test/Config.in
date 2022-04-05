@@ -39,5 +39,7 @@ choice
            bool "Digi2 Pro"
     config HIFIBERRY_TEST_POWERCONTROLLER
            bool "Power controller"
+    config HIFIBERRY_TEST_SGTL5000
+          bool "SGTL5000 board"
 endchoice
 

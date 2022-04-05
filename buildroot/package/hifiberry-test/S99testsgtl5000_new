@@ -1,0 +1,116 @@
+#! /bin/sh
+
+# Setup SGTL5000 based cards and play a test tone into loopback
+
+OUT=/dev/tty1
+
+case "$1" in
+    start)
+	if [ -f /etc/init.d/S90sigmatcp ]; then
+           mv /etc/init.d/S90sigmatcp /etc/init.d/noS90sigmatcp
+	fi
+	if [ ! -f /boot/overlays/fe-pi-audio.dtbo ]; then
+	   cp /opt/hifiberry/contrib/fe-pi-audio.dtbo  /boot/overlays/
+	   reboot
+	fi 
+
+	i2c=`cat /boot/config.txt | grep i2c-gpio`
+        if [ "$i2c" == "" ]; then
+           echo "dtoverlay=i2c-gpio" >> /boot/config.txt
+	   echo "dtparam=i2c_gpio_sda=0" >> /boot/config.txt
+	   echo "dtparam=i2c_gpio_scl=1" >> /boot/config.txt
+        fi
+
+	fail=0
+
+	amixer set 'Headphone' 103 >/dev/null
+	amixer set 'Headphone Mux' 'DAC' >/dev/null
+	amixer set 'PCM' 192 >/dev/null
+	amixer set 'Lineout' 0 >/dev/null
+	amixer set 'Mic' 1 >/dev/null
+	amixer set 'Capture' 6 >/dev/null
+	amixer set 'Capture Attenuate Switch (-6dB)' 'on' >/dev/null
+	amixer set 'Capture Mux' 'LINE_IN' >/dev/null
+	amixer set 'Digital Input Mux' 'I2S' >/dev/null
+	fail=0
+        # Test noise
+        arecord -r 48000 -d 4 -c 2 -f S32_LE /tmp/start.wav 2>/dev/null
+	if [ "$?" != "0" ]; then
+            echo "Could not record anything"
+            fail=1
+        fi 
+
+	# test onboard mic input
+	amixer set 'Capture Mux' 'MIC_IN' >/dev/null
+        arecord -r 48000 -d 2 -c 2 -f S32_LE /tmp/input.wav 2>/dev/null
+        RMS=`sox /tmp/input.wav -n stat 2>&1 | grep RMS | grep amplitude | awk '{print $3}'`
+        NOISE=`echo $RMS \* 1000000 / 1 | bc`
+        if [ $NOISE -lt 1000 ]; then
+           echo Problem - MIC not working: $NOISE > $OUT
+           fail=1
+        else
+           echo MIC ok: $NOISE > $OUT
+        fi
+
+	# test lin_in
+	amixer set 'Capture Mux' 'LINE_IN' >/dev/null
+	sleep 1
+        arecord -r 48000 -d 2 -c 2 -f S32_LE /tmp/input.wav 2>/dev/null
+        RMS=`sox /tmp/input.wav -n stat 2>&1 | grep RMS | grep amplitude | awk '{print $3}'`
+        NOISE=`echo $RMS \* 1000000 / 1 | bc`
+        if [ $NOISE -gt 100 ]; then
+           echo Problem - too much noise: $NOISE > $OUT
+           fail=1
+        else
+           echo Noise ok: $NOISE > $OUT
+        fi
+
+        # Test sine wave
+        if [ ! -f /opt/hifiberry/contrib/sine1k.wav ]; then
+            sox -n -r 48000 -c 2 /opt/hifiberry/contrib/sine1k.wav synth 5 sine 1000
+        fi
+        aplay /opt/hifiberry/contrib/sine1k.wav 2>/dev/null &
+        arecord -r 48000 -d 2 -c 2 -f S32_LE /tmp/input.wav 2>/dev/null
+        RMS=`sox /tmp/input.wav -n stat 2>&1 | grep RMS | grep amplitude | awk '{print $3}'`
+        SIGNAL=`echo $RMS \* 1000000 / 1 | bc`
+        if [ $SIGNAL -lt 650000 ]; then
+            echo Problem: signal too low: $SIGNAL > $OUT
+            fail=1
+        else
+            echo Signal ok: $SIGNAL > $OUT
+        fi
+
+	if [ $SIGNAL -gt 850000 ]; then
+            echo Problem: signal too high: $SIGNAL > $OUT
+            fail=1
+        else
+            echo Signal ok: $SIGNAL > $OUT
+        fi
+
+        if [ "$fail" == "0" ]; then
+                echo '  ___ | | __' > $OUT
+                echo ' / _ \| |/ /' > $OUT
+                echo '| (_) |   <'  > $OUT
+                echo ' \___/|_|\_\' > $OUT
+        else
+                echo '    ___       _ _     _ _ _ ' > $OUT
+                echo '   / __)     (_) |   | | | |' > $OUT
+                echo ' _| |__ _____ _| |   | | | |' > $OUT
+                echo '(_   __|____ | | |   |_|_|_|' > $OUT
+                echo '  | |  / ___ | | |    _ _ _ ' > $OUT
+                echo '  |_|  \_____|_|\_)  |_|_|_|' > $OUT
+        fi
+
+	;;
+    stop)
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac
+

@@ -122,6 +122,18 @@ define HIFIBERRY_TEST_INSTALL_INIT_SYSV_DSPADDON
         echo "dtoverlay=hifiberry-dacplus" >> $(BINARIES_DIR)/rpi-firmware/config.txt
 endef
 
+define HIFIBERRY_TEST_INSTALL_INIT_SYSV_SGTL5000
+        echo "Installing SGTL5000 boards test script"
+        mkdir -p $(TARGET_DIR)/boot/overlays/
+        $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/S99testsgtl5000 \
+                $(TARGET_DIR)/etc/init.d/S99testsgtl5000
+#        $(INSTALL) -D -m 0644 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/fe-pi-audio.dtbo \
+#                $(TARGET_DIR)/boot/overlays/
+
+        echo "Adding drivers to config.txt"
+        echo "dtoverlay=fe-pi-audio" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+endef
+
 
 define HIFIBERRY_TEST_INSTALL_INIT_SYSV_DSPDAC
 	echo "Installing DAC+ DSP test script"
@@ -255,6 +267,10 @@ endif
 
 ifdef HIFIBERRY_TEST_POWERCONTROLLER
 HIFIBERRY_TEST_POST_INSTALL_TARGET_HOOKS += HIFIBERRY_TEST_INSTALL_INIT_SYSV_POWERCONTROLLER
+endif
+
+ifdef HIFIBERRY_TEST_SGTL5000
+HIFIBERRY_TEST_POST_INSTALL_TARGET_HOOKS += HIFIBERRY_TEST_INSTALL_INIT_SYSV_SGTL5000
 endif
 
 $(eval $(generic-package))
