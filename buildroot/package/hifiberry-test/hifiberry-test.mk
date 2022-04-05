@@ -15,6 +15,8 @@ define HIFIBERRY_TEST_INSTALL_TARGET_CMDS
 	   $(TARGET_DIR)/opt/hifiberry/contrib
 	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/eeprom/amp100.eep \
            $(TARGET_DIR)/opt/hifiberry/contrib
+	$(INSTALL) -D -m 0644 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/eeprom/amp3.eep \
+           $(TARGET_DIR)/opt/hifiberry/contrib
         $(INSTALL) -D -m 0644 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/eeprom/dacplusadcpro.eep \
            $(TARGET_DIR)/opt/hifiberry/contrib
         $(INSTALL) -D -m 0644 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/eeprom/dacplus.eep \
@@ -50,6 +52,19 @@ define HIFIBERRY_TEST_INSTALL_INIT_SYSV_AMP2
         echo "dtparam=i2c_gpio_sda=0" >> $(BINARIES_DIR)/rpi-firmware/config.txt
         echo "dtparam=i2c_gpio_scl=1" >> $(BINARIES_DIR)/rpi-firmware/config.txt
         echo "dtoverlay=hifiberry-dacplus" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+	echo "force_eeprom_read=0" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+endef
+
+define HIFIBERRY_TEST_INSTALL_INIT_SYSV_AMP3
+        echo "Installing Amp3 test script"
+        $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_HIFIBERRY_PATH)/package/hifiberry-test/S99testamp3 \
+                $(TARGET_DIR)/etc/init.d/S99testamp3
+
+        echo "Adding drivers to config.txt"
+	echo "dtoverlay=i2c-gpio" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+        echo "dtparam=i2c_gpio_sda=0" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+        echo "dtparam=i2c_gpio_scl=1" >> $(BINARIES_DIR)/rpi-firmware/config.txt
+        echo "dtoverlay=hifiberry-amp3" >> $(BINARIES_DIR)/rpi-firmware/config.txt
 	echo "force_eeprom_read=0" >> $(BINARIES_DIR)/rpi-firmware/config.txt
 endef
 
@@ -219,6 +234,10 @@ endef
 
 ifdef HIFIBERRY_TEST_AMP2
 HIFIBERRY_TEST_POST_INSTALL_TARGET_HOOKS += HIFIBERRY_TEST_INSTALL_INIT_SYSV_AMP2
+endif
+
+ifdef HIFIBERRY_TEST_AMP3
+HIFIBERRY_TEST_POST_INSTALL_TARGET_HOOKS += HIFIBERRY_TEST_INSTALL_INIT_SYSV_AMP3
 endif
 
 ifdef HIFIBERRY_TEST_AMP100
